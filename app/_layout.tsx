@@ -1,6 +1,7 @@
 import { useEffect } from "react";
 import { Stack } from "expo-router";
 import { StatusBar } from "expo-status-bar";
+import { GestureHandlerRootView } from "react-native-gesture-handler";
 import * as SplashScreen from "expo-splash-screen";
 import {
   useFonts,
@@ -34,7 +35,7 @@ export default function RootLayout() {
   if (!fontsLoaded) return null;
 
   return (
-    <>
+    <GestureHandlerRootView style={{ flex: 1 }}>
       <StatusBar style="light" />
       <Stack
         screenOptions={{
@@ -46,6 +47,6 @@ export default function RootLayout() {
         <Stack.Screen name="gallery/[id]" options={{ presentation: "modal" }} />
         <Stack.Screen name="booking/[id]" options={{ presentation: "card" }} />
       </Stack>
-    </>
+    </GestureHandlerRootView>
   );
 }

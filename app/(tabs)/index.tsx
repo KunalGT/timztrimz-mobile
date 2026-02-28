@@ -1,4 +1,5 @@
-import { ScrollView, SafeAreaView } from "react-native";
+import { ScrollView } from "react-native";
+import { SafeAreaView } from "react-native-safe-area-context";
 import { useUserData } from "../../hooks/useUserData";
 import HeroCard from "../../components/home/HeroCard";
 import NextAppointment from "../../components/home/NextAppointment";

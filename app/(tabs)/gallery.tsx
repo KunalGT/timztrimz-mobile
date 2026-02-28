@@ -1,9 +1,10 @@
 import { useState } from "react";
-import { SafeAreaView, Text, View } from "react-native";
+import { Text, View } from "react-native";
+import { SafeAreaView } from "react-native-safe-area-context";
 import { useGallery } from "../../hooks/useGallery";
 import CategoryFilterChips from "../../components/gallery/CategoryFilterChips";
 import GalleryGrid from "../../components/gallery/GalleryGrid";
-import LoadingSpinner from "../../components/ui/LoadingSpinner";
+import { SkeletonGalleryItem } from "../../components/ui/Skeleton";
 import EmptyState from "../../components/ui/EmptyState";
 
 export default function GalleryScreen() {
@@ -19,7 +20,13 @@ export default function GalleryScreen() {
       </View>
       <View className="flex-1 px-4">
         {loading && images.length === 0 ? (
-          <LoadingSpinner message="Loading gallery..." />
+          <View className="flex-row flex-wrap mt-2">
+            {[1, 2, 3, 4, 5, 6].map((i) => (
+              <View key={i} className="w-1/2 p-1">
+                <SkeletonGalleryItem />
+              </View>
+            ))}
+          </View>
         ) : images.length === 0 ? (
           <EmptyState icon="📸" title="No images yet" subtitle="Check back soon for fresh styles" />
         ) : (

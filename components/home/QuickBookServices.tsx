@@ -4,13 +4,29 @@ import { router } from "expo-router";
 import { getServices } from "../../lib/api";
 import { Service } from "../../lib/types";
 import { formatPrice } from "../../lib/utils";
+import { SkeletonHomeCard } from "../ui/Skeleton";
 
 export default function QuickBookServices() {
   const [services, setServices] = useState<Service[]>([]);
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    getServices().then((data) => setServices(data.slice(0, 5))).catch(() => {});
+    getServices()
+      .then((data) => setServices(data.slice(0, 5)))
+      .catch(() => {})
+      .finally(() => setLoading(false));
   }, []);
+
+  if (loading) {
+    return (
+      <View className="mb-4">
+        <Text className="text-lg text-white font-sans-bold mb-3">Quick Book</Text>
+        <ScrollView horizontal showsHorizontalScrollIndicator={false}>
+          {[1, 2, 3].map((i) => <SkeletonHomeCard key={i} />)}
+        </ScrollView>
+      </View>
+    );
+  }
 
   if (services.length === 0) return null;
 

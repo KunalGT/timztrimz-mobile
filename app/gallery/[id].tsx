@@ -1,4 +1,5 @@
-import { View, Text, Pressable, Dimensions, SafeAreaView } from "react-native";
+import { View, Text, Pressable, Dimensions } from "react-native";
+import { SafeAreaView } from "react-native-safe-area-context";
 import { Image } from "expo-image";
 import { useLocalSearchParams, router } from "expo-router";
 

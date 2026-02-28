@@ -1,13 +1,20 @@
-import { useState, useEffect } from "react";
-import { View, Text, Pressable, SafeAreaView, ScrollView, ActivityIndicator } from "react-native";
+import { useState, useEffect, useRef } from "react";
+import { View, Text, Pressable, ScrollView, ActivityIndicator } from "react-native";
+import { SafeAreaView } from "react-native-safe-area-context";
 import { useLocalSearchParams } from "expo-router";
+import Animated, {
+  SlideInRight,
+  SlideInLeft,
+  SlideOutRight,
+  SlideOutLeft,
+} from "react-native-reanimated";
+import * as Haptics from "expo-haptics";
 import { useServices } from "../../hooks/useServices";
 import { useAvailability } from "../../hooks/useAvailability";
 import { useUserData } from "../../hooks/useUserData";
 import { createBooking } from "../../lib/api";
 import { saveUserData } from "../../lib/storage";
 import { Service, Booking } from "../../lib/types";
-import { COLORS } from "../../lib/constants";
 import StepIndicator from "../../components/booking/StepIndicator";
 import ServicePicker from "../../components/booking/ServicePicker";
 import DatePicker from "../../components/booking/DatePicker";
@@ -15,10 +22,11 @@ import TimeSlotGrid from "../../components/booking/TimeSlotGrid";
 import DetailsForm from "../../components/booking/DetailsForm";
 import ConfirmationCard from "../../components/booking/ConfirmationCard";
 import SuccessScreen from "../../components/booking/SuccessScreen";
+import { SkeletonServiceCard } from "../../components/ui/Skeleton";
 
 export default function BookScreen() {
   const params = useLocalSearchParams<{ serviceId?: string }>();
-  const { services } = useServices();
+  const { services, loading: servicesLoading } = useServices();
   const { userData } = useUserData();
 
   const [step, setStep] = useState(0);
@@ -30,6 +38,8 @@ export default function BookScreen() {
   const [submitting, setSubmitting] = useState(false);
   const [booking, setBooking] = useState<Booking | null>(null);
   const [error, setError] = useState("");
+
+  const direction = useRef<"forward" | "back">("forward");
 
   const { slots, loading: slotsLoading, dayOff } = useAvailability(
     selectedDate,
@@ -68,6 +78,34 @@ export default function BookScreen() {
     }
   };
 
+  const goForward = () => {
+    direction.current = "forward";
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+    setStep(step + 1);
+  };
+
+  const goBack = () => {
+    direction.current = "back";
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+    setStep(step - 1);
+  };
+
+  const handleServiceSelect = (service: Service) => {
+    Haptics.selectionAsync();
+    setSelectedService(service);
+  };
+
+  const handleDateSelect = (d: string) => {
+    Haptics.selectionAsync();
+    setSelectedDate(d);
+    setSelectedTime(null);
+  };
+
+  const handleTimeSelect = (t: string) => {
+    Haptics.selectionAsync();
+    setSelectedTime(t);
+  };
+
   const handleSubmit = async () => {
     if (!selectedService || !selectedDate || !selectedTime) return;
     setSubmitting(true);
@@ -84,7 +122,6 @@ export default function BookScreen() {
         notes: formData.notes || undefined,
       });
 
-      // Save user data for next time
       await saveUserData({
         name: formData.name,
         phone: formData.phone,
@@ -92,6 +129,8 @@ export default function BookScreen() {
       });
 
       setBooking(result);
+      direction.current = "forward";
+      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
       setStep(4);
     } catch (err) {
       setError(err instanceof Error ? err.message : "Something went wrong. Please try again.");
@@ -108,7 +147,16 @@ export default function BookScreen() {
     setFormData({ name: userData?.name || "", phone: userData?.phone || "", email: userData?.email || "", notes: "" });
     setBooking(null);
     setError("");
+    direction.current = "forward";
   };
+
+  const entering = direction.current === "forward"
+    ? SlideInRight.duration(250)
+    : SlideInLeft.duration(250);
+
+  const exiting = direction.current === "forward"
+    ? SlideOutLeft.duration(250)
+    : SlideOutRight.duration(250);
 
   // Success screen
   if (step === 4 && booking) {
@@ -128,59 +176,75 @@ export default function BookScreen() {
 
         <View className="flex-1">
           {step === 0 && (
-            <ServicePicker
-              services={services}
-              activeCategory={activeCategory}
-              onCategoryChange={setActiveCategory}
-              selectedService={selectedService}
-              onSelectService={setSelectedService}
-            />
+            <Animated.View key="step-0" entering={entering} exiting={exiting} className="flex-1">
+              {servicesLoading && services.length === 0 ? (
+                <View>
+                  <Text className="text-2xl font-display text-gold mb-1">Choose your service</Text>
+                  <Text className="text-sm text-warm-grey font-sans mb-4">Select what you'd like done today</Text>
+                  {[1, 2, 3, 4].map((i) => <SkeletonServiceCard key={i} />)}
+                </View>
+              ) : (
+                <ServicePicker
+                  services={services}
+                  activeCategory={activeCategory}
+                  onCategoryChange={setActiveCategory}
+                  selectedService={selectedService}
+                  onSelectService={handleServiceSelect}
+                />
+              )}
+            </Animated.View>
           )}
 
           {step === 1 && (
-            <ScrollView showsVerticalScrollIndicator={false}>
-              <Text className="text-2xl font-display text-gold mb-1">Pick a date & time</Text>
-              <Text className="text-sm text-warm-grey font-sans mb-4">
-                {selectedService?.name} — {selectedService?.duration} min
-              </Text>
-              <DatePicker
-                selectedDate={selectedDate}
-                onSelect={(d) => { setSelectedDate(d); setSelectedTime(null); }}
-              />
-              {selectedDate && (
-                <TimeSlotGrid
-                  slots={slots}
-                  loading={slotsLoading}
-                  dayOff={dayOff}
-                  selectedTime={selectedTime}
-                  onSelect={setSelectedTime}
+            <Animated.View key="step-1" entering={entering} exiting={exiting} className="flex-1">
+              <ScrollView showsVerticalScrollIndicator={false}>
+                <Text className="text-2xl font-display text-gold mb-1">Pick a date & time</Text>
+                <Text className="text-sm text-warm-grey font-sans mb-4">
+                  {selectedService?.name} — {selectedService?.duration} min
+                </Text>
+                <DatePicker
+                  selectedDate={selectedDate}
+                  onSelect={handleDateSelect}
                 />
-              )}
-            </ScrollView>
+                {selectedDate && (
+                  <TimeSlotGrid
+                    slots={slots}
+                    loading={slotsLoading}
+                    dayOff={dayOff}
+                    selectedTime={selectedTime}
+                    onSelect={handleTimeSelect}
+                  />
+                )}
+              </ScrollView>
+            </Animated.View>
           )}
 
           {step === 2 && (
-            <DetailsForm formData={formData} onChange={setFormData} />
+            <Animated.View key="step-2" entering={entering} exiting={exiting} className="flex-1">
+              <DetailsForm formData={formData} onChange={setFormData} />
+            </Animated.View>
           )}
 
           {step === 3 && selectedService && selectedDate && selectedTime && (
-            <ScrollView showsVerticalScrollIndicator={false}>
-              <ConfirmationCard
-                service={selectedService}
-                date={selectedDate}
-                time={selectedTime}
-                clientName={formData.name}
-                notes={formData.notes}
-                error={error}
-              />
-            </ScrollView>
+            <Animated.View key="step-3" entering={entering} exiting={exiting} className="flex-1">
+              <ScrollView showsVerticalScrollIndicator={false}>
+                <ConfirmationCard
+                  service={selectedService}
+                  date={selectedDate}
+                  time={selectedTime}
+                  clientName={formData.name}
+                  notes={formData.notes}
+                  error={error}
+                />
+              </ScrollView>
+            </Animated.View>
           )}
         </View>
 
         {/* Navigation */}
         <View className="flex-row items-center justify-between py-4 border-t border-gray-800">
           {step > 0 ? (
-            <Pressable onPress={() => setStep(step - 1)} className="flex-row items-center px-4 py-2.5">
+            <Pressable onPress={goBack} className="flex-row items-center px-4 py-2.5">
               <Text className="text-warm-grey font-sans-medium text-sm">{"\u2190"} Back</Text>
             </Pressable>
           ) : (
@@ -190,7 +254,7 @@ export default function BookScreen() {
           {step < 3 ? (
             <Pressable
               disabled={!canProceed()}
-              onPress={() => setStep(step + 1)}
+              onPress={goForward}
               className={`bg-gold rounded-full px-6 py-2.5 ${!canProceed() ? "opacity-40" : ""}`}
             >
               <Text className="text-black font-sans-semibold text-sm">Continue {"\u2192"}</Text>

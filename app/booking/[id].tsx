@@ -1,5 +1,6 @@
 import { useState, useEffect, useCallback } from "react";
-import { View, Text, SafeAreaView, ScrollView, Pressable, Alert } from "react-native";
+import { View, Text, ScrollView, Pressable, Alert } from "react-native";
+import { SafeAreaView } from "react-native-safe-area-context";
 import { useLocalSearchParams, router } from "expo-router";
 import { getBookings, cancelBooking } from "../../lib/api";
 import { Booking } from "../../lib/types";
