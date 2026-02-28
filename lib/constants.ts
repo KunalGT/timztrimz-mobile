@@ -12,17 +12,17 @@ export const COLORS = {
   white: "#FFFFFF",
 } as const;
 
-export const CATEGORIES = ["Cuts", "Beard", "Kids", "Specials", "Add-ons"] as const;
+export const CATEGORIES = ["Cuts", "Beard", "Kids", "Specials", "Add-ons", "SMP"] as const;
 
-export const GALLERY_CATEGORIES = ["All", "fades", "beards", "lineups", "kids"] as const;
+export const GALLERY_CATEGORIES = ["All", "fades", "beards", "lineups", "kids", "smp"] as const;
 
 export const SHOP_LOCATION = {
   name: "Timz Trimz",
-  address: "123 High Street",
-  postcode: "E1 1AA",
+  address: "8 Avenue Parade, Winchmore Hill",
+  postcode: "N21 2AX",
   phone: "020 7123 4567",
-  lat: 51.5074,
-  lng: -0.1278,
+  lat: 51.6342,
+  lng: -0.1003,
 } as const;
 
 export const OPENING_HOURS = {

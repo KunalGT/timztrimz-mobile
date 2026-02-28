@@ -1,6 +1,6 @@
 import { ScrollView, Pressable, Text } from "react-native";
 
-const CATEGORIES = ["All", "fades", "beards", "lineups", "kids"];
+const CATEGORIES = ["All", "fades", "beards", "lineups", "kids", "smp"];
 
 interface Props {
   active: string;
